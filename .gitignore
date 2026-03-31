@@ -4,3 +4,8 @@ __pycache__/
 *.pyc
 assets/*.mov
 .DS_Store
+.env
+.env.local
+.env.production
+.env.development
+node_modules/
