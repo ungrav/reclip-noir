@@ -647,7 +647,7 @@
             c.status = 'done';
             c.filename = data.filename;
             renderCard(idx);
-            if (cardData.length === 1) saveCard(idx);
+            saveCard(idx);
           } else if (data.status === 'error') {
             clearInterval(iv);
             c.status = 'error';
