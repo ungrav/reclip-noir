@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/419d3e50-c933-444b-8cab-a9724986ba05
 brew install yt-dlp ffmpeg    # or apt install ffmpeg && pip install yt-dlp
 git clone https://github.com/averygan/reclip.git
 cd reclip
-bash run.sh
+./reclip.sh
 ```
 
 Open **http://localhost:8899**.
