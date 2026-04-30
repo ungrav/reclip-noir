@@ -5,6 +5,7 @@ import glob
 import json
 import subprocess
 import threading
+import urllib.request
 from flask import Flask, request, jsonify, send_file, render_template
 
 app = Flask(__name__)
@@ -20,6 +21,27 @@ oauth2_jobs = {}
 
 
 # ─── Auth Helpers ────────────────────────────────────────────────────────────
+
+def _get_working_proxy(allow_direct):
+    """Prueba y devuelve el primer proxy activo. Lanza error si todos fallan y no allow_direct."""
+    proxies = [
+        "http://host.docker.internal:8891",  # NordVPN
+        "http://host.docker.internal:8892"   # ProtonVPN
+    ]
+    for p in proxies:
+        try:
+            proxy_handler = urllib.request.ProxyHandler({'http': p, 'https': p})
+            opener = urllib.request.build_opener(proxy_handler)
+            opener.open('http://gstatic.com/generate_204', timeout=3)
+            return p
+        except Exception:
+            continue
+    
+    if allow_direct:
+        return None
+    else:
+        raise ValueError("vpn_required")
+
 
 def _is_auth_error(stderr):
     """Detecta si el error es de autenticación para activar el fallback."""
@@ -52,13 +74,16 @@ def _get_auth_strategies():
     return strategies
 
 
-def _run_with_fallback(base_cmd, url, timeout=60):
+def _run_with_fallback(base_cmd, url, proxy=None, timeout=60):
     """
     Ejecuta base_cmd + url probando cada estrategia de auth.
     Si la estrategia falla con error de autenticación, pasa a la siguiente.
     """
     strategies = _get_auth_strategies()
     last_result = None
+
+    if proxy:
+        base_cmd = base_cmd + ["--proxy", proxy]
 
     for auth_args in strategies:
         cmd = base_cmd + auth_args + [url]
@@ -74,7 +99,7 @@ def _run_with_fallback(base_cmd, url, timeout=60):
 
 # ─── Download Logic ──────────────────────────────────────────────────────────
 
-def run_download(job_id, url, format_choice, format_id):
+def run_download(job_id, url, format_choice, format_id, proxy):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
@@ -88,7 +113,7 @@ def run_download(job_id, url, format_choice, format_id):
         base_cmd += ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"]
 
     try:
-        result = _run_with_fallback(base_cmd, url, timeout=300)
+        result = _run_with_fallback(base_cmd, url, proxy=proxy, timeout=300)
 
         if result.returncode != 0:
             job["status"] = "error"
@@ -144,12 +169,20 @@ def index():
 def get_info():
     data = request.json
     url = data.get("url", "").strip()
+    allow_direct = data.get("allow_direct", False)
     if not url:
         return jsonify({"error": "No se proporcionó URL"}), 400
 
+    try:
+        proxy = _get_working_proxy(allow_direct)
+    except ValueError as e:
+        if str(e) == "vpn_required":
+            return jsonify({"error": "VPN no disponible", "vpn_required": True}), 403
+        return jsonify({"error": "Error interno validando proxy"}), 500
+
     base_cmd = ["yt-dlp", "--no-playlist", "-j"]
     try:
-        result = _run_with_fallback(base_cmd, url, timeout=60)
+        result = _run_with_fallback(base_cmd, url, proxy=proxy, timeout=60)
         if result.returncode != 0:
             return jsonify({"error": result.stderr.strip().split("\n")[-1]}), 400
 
@@ -188,14 +221,22 @@ def start_download():
     format_choice = data.get("format", "video")
     format_id = data.get("format_id")
     title = data.get("title", "")
+    allow_direct = data.get("allow_direct", False)
 
     if not url:
         return jsonify({"error": "No se proporcionó URL"}), 400
 
+    try:
+        proxy = _get_working_proxy(allow_direct)
+    except ValueError as e:
+        if str(e) == "vpn_required":
+            return jsonify({"error": "VPN no disponible", "vpn_required": True}), 403
+        return jsonify({"error": "Error interno validando proxy"}), 500
+
     job_id = uuid.uuid4().hex[:10]
     jobs[job_id] = {"status": "downloading", "url": url, "title": title}
 
-    thread = threading.Thread(target=run_download, args=(job_id, url, format_choice, format_id))
+    thread = threading.Thread(target=run_download, args=(job_id, url, format_choice, format_id, proxy))
     thread.daemon = True
     thread.start()
 

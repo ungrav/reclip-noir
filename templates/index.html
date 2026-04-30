@@ -556,6 +556,8 @@
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); }
     });
 
+    let allowDirect = false;
+
     async function go() {
       const urls = parseUrls(document.getElementById('urls').value);
       if (!urls.length) return;
@@ -577,9 +579,23 @@
           const res = await fetch('/api/info', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url }),
+            body: JSON.stringify({ url, allow_direct: allowDirect }),
           });
           const data = await res.json();
+          
+          if (data.vpn_required && !allowDirect) {
+            const ans = confirm('VPN no disponible (NordVPN y ProtonVPN caídos o inalcanzables).\n\n¿Deseas intentar la descarga usando tu conexión directa a internet sin protección VPN?');
+            if (ans) {
+              allowDirect = true;
+              i--; // Reintentar
+              continue;
+            } else {
+              cardData[idx] = { ...cardData[idx], status: 'info-error', error: 'Operación cancelada: VPN requerida' };
+              renderCard(idx);
+              continue;
+            }
+          }
+
           if (data.error) {
             cardData[idx] = { ...cardData[idx], status: 'info-error', error: data.error };
           } else {
@@ -723,9 +739,24 @@
             format: currentFormat,
             format_id: c.selectedFormatId,
             title: c.title || '',
+            allow_direct: allowDirect
           }),
         });
         const data = await res.json();
+
+        if (data.vpn_required && !allowDirect) {
+            const ans = confirm('VPN no disponible (NordVPN y ProtonVPN caídos o inalcanzables).\n\n¿Deseas descargar usando tu conexión directa a internet sin protección VPN?');
+            if (ans) {
+              allowDirect = true;
+              return dlCard(idx);
+            } else {
+              c.status = 'error';
+              c.error = 'Cancelado: VPN requerida';
+              renderCard(idx);
+              return;
+            }
+        }
+
         if (data.error) {
           c.status = 'error';
           c.error = data.error;
