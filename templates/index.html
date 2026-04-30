@@ -384,18 +384,18 @@
   <div class="page">
     <div class="brand">
       <h1>Re<em>Clip</em></h1>
-      <p>Free media downloader</p>
+      <p>Descargador de medios gratuito</p>
     </div>
 
-    <textarea id="urls" placeholder="Paste one or more URLs..." rows="2"></textarea>
-    <p class="hint">Multiple links? Separate with spaces, commas, or newlines.</p>
+    <textarea id="urls" placeholder="Pega una o más URLs..." rows="2"></textarea>
+    <p class="hint">¿Múltiples links? Sepáralos con espacios, comas o saltos de línea.</p>
 
     <div class="controls">
       <div class="pill-group">
         <button class="pill active" data-format="video" onclick="setFormat(this)">MP4</button>
         <button class="pill" data-format="audio" onclick="setFormat(this)">MP3</button>
       </div>
-      <button class="fetch-btn" id="goBtn" onclick="go()">Fetch</button>
+      <button class="fetch-btn" id="goBtn" onclick="go()">Buscar</button>
     </div>
 
     <div id="cards" class="cards"></div>
@@ -435,15 +435,15 @@
     }
 
     function friendlyError(err) {
-      if (err.includes('Unsupported URL')) return 'This URL is not supported';
-      if (err.includes('Video unavailable')) return 'Video is unavailable or private';
-      if (err.includes('Private video')) return 'This video is private';
-      if (err.includes('HTTP Error 403')) return 'Access denied by the platform';
-      if (err.includes('HTTP Error 404')) return 'Video not found';
-      if (err.includes('copyright')) return 'Video blocked due to copyright';
-      if (err.includes('geo')) return 'Video not available in your region';
-      if (err.includes('timed out') || err.includes('Timed out')) return 'Request timed out — try again';
-      if (err.includes('network') || err.includes('Network')) return 'Network error — check your connection';
+      if (err.includes('Unsupported URL')) return 'Esta URL no es compatible';
+      if (err.includes('Video unavailable')) return 'El video no está disponible o es privado';
+      if (err.includes('Private video')) return 'Este video es privado';
+      if (err.includes('HTTP Error 403')) return 'Acceso denegado por la plataforma';
+      if (err.includes('HTTP Error 404')) return 'Video no encontrado';
+      if (err.includes('copyright')) return 'Video bloqueado por derechos de autor';
+      if (err.includes('geo')) return 'Video no disponible en tu región';
+      if (err.includes('timed out') || err.includes('Timed out')) return 'Tiempo de espera agotado — intenta de nuevo';
+      if (err.includes('network') || err.includes('Network')) return 'Error de red — verifica tu conexión';
       return err.length > 80 ? err.slice(0, 80) + '...' : err;
     }
 
@@ -458,7 +458,7 @@
       const btn = document.getElementById('goBtn');
       const container = document.getElementById('cards');
       btn.disabled = true;
-      btn.textContent = 'Loading...';
+      btn.textContent = 'Cargando...';
       container.innerHTML = '';
       cardData = [];
 
@@ -500,7 +500,7 @@
       }
 
       btn.disabled = false;
-      btn.textContent = 'Fetch';
+      btn.textContent = 'Buscar';
     }
 
     function renderCard(idx) {
@@ -536,7 +536,7 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="card-title" style="color:var(--error)">Could not fetch video</div>
+            <div class="card-title" style="color:var(--error)">No se pudo obtener el video</div>
             <div class="card-error-msg">${esc(friendlyError(c.error || ''))}</div>
             <div class="card-error-url">${esc(c.url)}</div>
           </div>
@@ -566,21 +566,21 @@
 
       let actionHtml = '';
       if (c.status === 'ready') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Download</button>${qualityChips}`;
+        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Descargar</button>${qualityChips}`;
       } else if (c.status === 'downloading') {
-        actionHtml = `<span class="card-status downloading"><span class="spin"></span> Downloading...</span>`;
+        actionHtml = `<span class="card-status downloading"><span class="spin"></span> Descargando...</span>`;
       } else if (c.status === 'done') {
-        actionHtml = `<button class="card-dl-btn done" onclick="saveCard(${idx})">Save</button>
+        actionHtml = `<button class="card-dl-btn done" onclick="saveCard(${idx})">Guardar</button>
           <span class="card-status done">${esc(c.filename || '')}</span>`;
       } else if (c.status === 'error') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Retry</button>
-          <span class="card-status error">${esc(friendlyError(c.error || 'Download failed'))}</span>`;
+        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Reintentar</button>
+          <span class="card-status error">${esc(friendlyError(c.error || 'Descarga fallida'))}</span>`;
       }
 
       el.innerHTML = `
         <div class="card-thumb">${thumbHtml}</div>
         <div class="card-body">
-          <div class="card-title">${esc(c.title || 'Untitled')}</div>
+          <div class="card-title">${esc(c.title || 'Sin título')}</div>
           <div class="card-meta">${esc(c.uploader)}${c.duration ? ' · ' + fmtDur(c.duration) : ''}</div>
           <div class="card-actions">${actionHtml}</div>
         </div>
@@ -594,7 +594,7 @@
       const bar = document.createElement('div');
       bar.id = 'dl-all-bar';
       bar.className = 'dl-all-bar';
-      bar.innerHTML = `<button class="dl-all-btn" onclick="dlAll()">Download All</button>`;
+      bar.innerHTML = `<button class="dl-all-btn" onclick="dlAll()">Descargar Todo</button>`;
       document.getElementById('cards').appendChild(bar);
     }
 
@@ -657,7 +657,7 @@
         } catch {
           clearInterval(iv);
           c.status = 'error';
-          c.error = 'Lost connection to server';
+          c.error = 'Se perdió la conexión con el servidor';
           renderCard(idx);
         }
       }, 1000);
@@ -674,7 +674,7 @@
 
     async function dlAll() {
       const btn = document.querySelector('.dl-all-btn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Downloading...'; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Descargando...'; }
 
       for (let i = 0; i < cardData.length; i++) {
         if (cardData[i].status === 'ready') {
@@ -682,7 +682,7 @@
         }
       }
 
-      if (btn) { btn.disabled = false; btn.textContent = 'Download All'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Descargar Todo'; }
     }
   </script>
 </body>
