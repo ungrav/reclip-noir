@@ -9,17 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f4f1eb;
-      --fg: #3a3a38;
-      --accent: #e85d2a;
-      --accent-hover: #d04e1f;
-      --muted: #9c9889;
-      --card: #fff;
-      --card-border: #e2ded6;
-      --success: #2d8a4e;
-      --error: #c43d3d;
-      --radius: 14px;
-      --shimmer: linear-gradient(90deg, #ebe8e2 25%, #f0ede7 50%, #ebe8e2 75%);
+      --bg: #0a0a0a;
+      --fg: #efefef;
+      --accent: #ff6b35;
+      --accent-hover: #ff8552;
+      --muted: #666;
+      --card: #141414;
+      --card-border: #262626;
+      --success: #3fb950;
+      --error: #f85149;
+      --radius: 16px;
+      --shimmer: linear-gradient(90deg, #141414 25%, #1f1f1f 50%, #141414 75%);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,7 +36,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      opacity: 0.03;
+      opacity: 0.05;
       pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
       background-size: 128px;
@@ -284,7 +284,7 @@
     .q-chip.active {
       border-color: var(--fg);
       color: var(--fg);
-      background: rgba(26,26,24,0.04);
+      background: rgba(255,255,255,0.08);
     }
     .q-chip:hover:not(.active) { border-color: var(--muted); }
 

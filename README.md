@@ -16,24 +16,25 @@ https://github.com/user-attachments/assets/419d3e50-c933-444b-8cab-a9724986ba05
 - Quality/resolution picker
 - Bulk downloads — paste multiple URLs at once
 - Automatic URL deduplication
+- **New: Premium Dark Mode UI**
 - Clean, responsive UI — no frameworks, no build step
 - Single Python file backend (~150 lines)
 
 ## Quick Start
 
 ```bash
-brew install yt-dlp ffmpeg    # or apt install ffmpeg && pip install yt-dlp
 git clone https://github.com/averygan/reclip.git
 cd reclip
-./reclip.sh
+docker-compose up -d
 ```
 
 Open **http://localhost:8899**.
 
-Or with Docker:
+Or without Docker:
 
 ```bash
-docker build -t reclip . && docker run -p 8899:8899 reclip
+brew install yt-dlp ffmpeg    # or apt install ffmpeg && pip install yt-dlp
+./reclip.sh
 ```
 
 ## Usage

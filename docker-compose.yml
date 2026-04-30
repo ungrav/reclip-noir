@@ -1,0 +1,13 @@
+services:
+  reclip:
+    build: .
+    container_name: reclip
+    ports:
+      - "8899:8899"
+    volumes:
+      - .:/app
+      - /app/downloads
+    restart: unless-stopped
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8899
