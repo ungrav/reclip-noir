@@ -364,6 +364,86 @@
       line-height: 1.8;
     }
 
+    /* Auth Panel */
+    .auth-panel {
+      margin-top: 16px;
+      border: 1.5px solid var(--card-border);
+      border-radius: var(--radius);
+      background: var(--card);
+      padding: 14px 16px;
+    }
+    .auth-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .auth-title {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .auth-toggle { font-size: 0.7rem; color: var(--muted); }
+    .auth-body { margin-top: 12px; }
+    .auth-indicators {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .auth-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid var(--card-border);
+      font-size: 0.65rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .auth-badge.active { border-color: var(--success); color: var(--success); }
+    .auth-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .auth-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .auth-btn {
+      padding: 7px 14px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--fg);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .auth-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .auth-btn.danger:hover { border-color: var(--error); color: var(--error); }
+    .auth-code-box {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--accent);
+      background: rgba(255,107,53,0.06);
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+    .auth-code-box .code {
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      display: block;
+      margin: 6px 0;
+    }
+    .auth-code-box a { color: var(--accent); }
+
     /* Mobile */
     @media (max-width: 500px) {
       .brand h1 { font-size: 3rem; }
@@ -399,6 +479,31 @@
     </div>
 
     <div id="cards" class="cards"></div>
+
+    <!-- Panel de Autenticación -->
+    <div class="auth-panel" id="authPanel">
+      <div class="auth-header" onclick="toggleAuth()">
+        <span class="auth-title">🔐 Autenticación</span>
+        <span class="auth-toggle" id="authToggle">▼ mostrar</span>
+      </div>
+      <div class="auth-body" id="authBody" style="display:none">
+        <div class="auth-indicators" id="authIndicators">
+          <span class="auth-badge" id="badge-pot"><span class="dot"></span>POT</span>
+          <span class="auth-badge" id="badge-oauth2"><span class="dot"></span>YouTube OAuth2</span>
+          <span class="auth-badge" id="badge-browser"><span class="dot"></span>Browser</span>
+        </div>
+        <div class="auth-actions">
+          <button class="auth-btn" onclick="startOAuth2()">Iniciar sesión YouTube (TV)</button>
+          <a href="http://localhost:3000" target="_blank">
+            <button class="auth-btn">Abrir Navegador →</button>
+          </a>
+          <button class="auth-btn danger" id="logoutBtn" onclick="logout()" style="display:none">Cerrar sesión YT</button>
+        </div>
+        <div id="oauthCodeBox" style="display:none" class="auth-code-box">
+          <div id="oauthMsg">Iniciando autenticación...</div>
+        </div>
+      </div>
+    </div>
 
     <div class="footer">
       YouTube &middot; TikTok &middot; Instagram &middot; Twitter/X &middot; Reddit &middot; Facebook<br>
@@ -684,6 +789,88 @@
 
       if (btn) { btn.disabled = false; btn.textContent = 'Descargar Todo'; }
     }
+
+    // ── Auth Panel ──────────────────────────────────────────────────────────
+
+    let authOpen = false;
+    let oauthPollInterval = null;
+
+    function toggleAuth() {
+      authOpen = !authOpen;
+      document.getElementById('authBody').style.display = authOpen ? 'block' : 'none';
+      document.getElementById('authToggle').textContent = authOpen ? '▲ ocultar' : '▼ mostrar';
+      if (authOpen) loadAuthStatus();
+    }
+
+    async function loadAuthStatus() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+
+        const badge = (id, active) => {
+          const el = document.getElementById(`badge-${id}`);
+          if (el) el.classList.toggle('active', active);
+        };
+
+        badge('pot', data.pot);
+        badge('oauth2', data.oauth2);
+        badge('browser', data.browser);
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.style.display = data.oauth2 ? 'inline-block' : 'none';
+      } catch (e) {
+        console.error('Error cargando estado de auth', e);
+      }
+    }
+
+    async function startOAuth2() {
+      const codeBox = document.getElementById('oauthCodeBox');
+      const msg = document.getElementById('oauthMsg');
+      codeBox.style.display = 'block';
+      msg.innerHTML = '<span class="spin"></span> Iniciando autenticación YouTube...';
+
+      try {
+        const res = await fetch('/api/auth/youtube/start', { method: 'POST' });
+        const { job_id } = await res.json();
+
+        if (oauthPollInterval) clearInterval(oauthPollInterval);
+
+        oauthPollInterval = setInterval(async () => {
+          const r = await fetch(`/api/auth/youtube/${job_id}`);
+          const job = await r.json();
+
+          if (job.status === 'pending_auth' && job.auth_url) {
+            const code = job.user_code ? `<span class="code">${job.user_code}</span>` : '';
+            msg.innerHTML = `
+              1. Abre este enlace en tu navegador:<br>
+              <a href="${job.auth_url}" target="_blank">${job.auth_url}</a>
+              ${code ? `2. Ingresa el código: ${code}` : ''}
+              3. Aprueba el acceso en YouTube<br>
+              <small style="color:var(--muted)">Esperando confirmación...</small>
+            `;
+          } else if (job.status === 'done') {
+            clearInterval(oauthPollInterval);
+            msg.innerHTML = '✅ ¡Autenticado con YouTube correctamente!';
+            setTimeout(() => { codeBox.style.display = 'none'; loadAuthStatus(); }, 3000);
+          } else if (job.status === 'error') {
+            clearInterval(oauthPollInterval);
+            msg.innerHTML = `❌ Error: ${job.error || 'Autenticación fallida'}`;
+          }
+        }, 2000);
+
+      } catch (e) {
+        msg.innerHTML = `❌ Error al iniciar: ${e.message}`;
+      }
+    }
+
+    async function logout() {
+      await fetch('/api/auth/youtube/logout', { method: 'POST' });
+      loadAuthStatus();
+      document.getElementById('oauthCodeBox').style.display = 'none';
+    }
+
+    // Cargar estado de auth al inicio (silencioso)
+    loadAuthStatus();
   </script>
 </body>
 </html>

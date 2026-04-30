@@ -7,7 +7,33 @@ services:
     volumes:
       - .:/app
       - /app/downloads
+      - auth-data:/app/auth
+      - browser-data:/browser-data
     restart: unless-stopped
     environment:
       - HOST=0.0.0.0
       - PORT=8899
+    depends_on:
+      - browser
+
+  browser:
+    image: lscr.io/linuxserver/chromium:latest
+    container_name: reclip-browser
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Caracas
+      - CHROME_CLI=https://www.youtube.com
+    volumes:
+      - browser-data:/config
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    shm_size: "1gb"
+    restart: unless-stopped
+
+volumes:
+  auth-data:
+  browser-data:

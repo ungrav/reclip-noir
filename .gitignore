@@ -8,3 +8,8 @@ assets/*.mov
 .env.local
 .env.production
 .env.development
+# Auth y cookies — nunca subir a git
+auth/
+auth-data/
+browser-data/
+cookies.txt
