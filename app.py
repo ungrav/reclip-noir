@@ -201,13 +201,23 @@ def get_info():
             return jsonify({"error": "VPN no disponible", "vpn_required": True}), 403
         return jsonify({"error": "Error interno validando proxy"}), 500
 
+    # Normalizar m.youtube.com a www.youtube.com para mayor compatibilidad
+    url = url.replace("://m.youtube.com", "://www.youtube.com")
+
     base_cmd = ["yt-dlp", "--no-playlist", "-j"]
     try:
         result = _run_with_fallback(base_cmd, url, proxy=proxy, timeout=60)
         if result.returncode != 0:
             return jsonify({"error": result.stderr.strip().split("\n")[-1]}), 400
 
-        info = json.loads(result.stdout)
+        stdout_clean = result.stdout.strip()
+        if not stdout_clean:
+            return jsonify({"error": "La URL no parece contener un video válido."}), 400
+            
+        try:
+            info = json.loads(stdout_clean)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Respuesta inválida al procesar el video."}), 400
 
         best_by_height = {}
         for f in info.get("formats", []):
@@ -246,6 +256,9 @@ def start_download():
 
     if not url:
         return jsonify({"error": "No se proporcionó URL"}), 400
+
+    # Normalizar m.youtube.com a www.youtube.com
+    url = url.replace("://m.youtube.com", "://www.youtube.com")
 
     try:
         proxy = _get_working_proxy(allow_direct)
