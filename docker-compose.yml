@@ -25,10 +25,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/New_York
-      - CHROME_CLI=--proxy-pac-url=http://host.docker.internal:8899/proxy.pac https://www.youtube.com
-      - SELKIES_IS_MANUAL_RESOLUTION_MODE=true
-      - SELKIES_MANUAL_WIDTH=420
-      - SELKIES_MANUAL_HEIGHT=800
+      - CHROME_CLI=--proxy-pac-url=http://host.docker.internal:8899/proxy.pac --use-mobile-user-agent https://m.youtube.com
     volumes:
       - browser-data:/config
     ports:
