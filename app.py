@@ -158,17 +158,30 @@ def index():
     return render_template("index.html")
 
 
+import socket
+
+def get_docker_gateway():
+    try:
+        with open('/proc/net/route') as f:
+            for line in f.readlines():
+                fields = line.strip().split()
+                if fields[1] != '00000000' or not int(fields[3], 16) & 2:
+                    continue
+                return socket.inet_ntoa(bytes.fromhex(fields[2])[::-1])
+    except:
+        pass
+    return "host.docker.internal"
+
 @app.route("/proxy.pac")
 def proxy_pac():
     """
     PAC file para Chromium Sidecar.
-    Fuerza el uso de NordVPN (8891), hace fallback a ProtonVPN (8892),
-    y si ambos caen, permite acceso directo (DIRECT).
     """
-    pac_content = """
-function FindProxyForURL(url, host) {
-    return "PROXY host.docker.internal:8891; PROXY host.docker.internal:8892; DIRECT";
-}
+    gateway_ip = get_docker_gateway()
+    pac_content = f"""
+function FindProxyForURL(url, host) {{
+    return "PROXY {gateway_ip}:8891; PROXY {gateway_ip}:8892; DIRECT";
+}}
 """
     return Response(pac_content, mimetype="application/x-ns-proxy-autoconfig")
 
