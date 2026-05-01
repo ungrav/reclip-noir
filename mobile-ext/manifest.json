@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Mobile User Agent",
+  "version": "1.0",
+  "description": "Forces mobile User-Agent for responsive views",
+  "permissions": ["declarativeNetRequest"],
+  "host_permissions": ["<all_urls>"],
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "mobile_rules",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  }
+}

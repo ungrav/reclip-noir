@@ -25,9 +25,10 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/New_York
-      - CHROME_CLI=--proxy-pac-url=http://host.docker.internal:8899/proxy.pac https://www.youtube.com
+      - CHROME_CLI=--proxy-pac-url=http://host.docker.internal:8899/proxy.pac --load-extension=/mobile-ext https://www.youtube.com
     volumes:
       - browser-data:/config
+      - ./mobile-ext:/mobile-ext:ro
     ports:
       - "3000:3000"
       - "3001:3001"
