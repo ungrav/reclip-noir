@@ -489,18 +489,12 @@
       <div class="auth-body" id="authBody" style="display:none">
         <div class="auth-indicators" id="authIndicators">
           <span class="auth-badge" id="badge-pot"><span class="dot"></span>POT</span>
-          <span class="auth-badge" id="badge-oauth2"><span class="dot"></span>YouTube OAuth2</span>
-          <span class="auth-badge" id="badge-browser"><span class="dot"></span>Browser</span>
+          <span class="auth-badge" id="badge-browser"><span class="dot"></span>Browser Sidecar</span>
         </div>
         <div class="auth-actions">
-          <button class="auth-btn" onclick="startOAuth2()">Iniciar sesión YouTube (TV)</button>
           <a href="http://localhost:3000" target="_blank">
-            <button class="auth-btn">Abrir Navegador →</button>
+            <button class="auth-btn">Abrir Navegador Sidecar →</button>
           </a>
-          <button class="auth-btn danger" id="logoutBtn" onclick="logout()" style="display:none">Cerrar sesión YT</button>
-        </div>
-        <div id="oauthCodeBox" style="display:none" class="auth-code-box">
-          <div id="oauthMsg">Iniciando autenticación...</div>
         </div>
       </div>
     </div>
@@ -844,60 +838,10 @@
         };
 
         badge('pot', data.pot);
-        badge('oauth2', data.oauth2);
         badge('browser', data.browser);
-
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) logoutBtn.style.display = data.oauth2 ? 'inline-block' : 'none';
       } catch (e) {
         console.error('Error cargando estado de auth', e);
       }
-    }
-
-    async function startOAuth2() {
-      const codeBox = document.getElementById('oauthCodeBox');
-      const msg = document.getElementById('oauthMsg');
-      codeBox.style.display = 'block';
-      msg.innerHTML = '<span class="spin"></span> Iniciando autenticación YouTube...';
-
-      try {
-        const res = await fetch('/api/auth/youtube/start', { method: 'POST' });
-        const { job_id } = await res.json();
-
-        if (oauthPollInterval) clearInterval(oauthPollInterval);
-
-        oauthPollInterval = setInterval(async () => {
-          const r = await fetch(`/api/auth/youtube/${job_id}`);
-          const job = await r.json();
-
-          if (job.status === 'pending_auth' && job.auth_url) {
-            const code = job.user_code ? `<span class="code">${job.user_code}</span>` : '';
-            msg.innerHTML = `
-              1. Abre este enlace en tu navegador:<br>
-              <a href="${job.auth_url}" target="_blank">${job.auth_url}</a>
-              ${code ? `2. Ingresa el código: ${code}` : ''}
-              3. Aprueba el acceso en YouTube<br>
-              <small style="color:var(--muted)">Esperando confirmación...</small>
-            `;
-          } else if (job.status === 'done') {
-            clearInterval(oauthPollInterval);
-            msg.innerHTML = '✅ ¡Autenticado con YouTube correctamente!';
-            setTimeout(() => { codeBox.style.display = 'none'; loadAuthStatus(); }, 3000);
-          } else if (job.status === 'error') {
-            clearInterval(oauthPollInterval);
-            msg.innerHTML = `❌ Error: ${job.error || 'Autenticación fallida'}`;
-          }
-        }, 2000);
-
-      } catch (e) {
-        msg.innerHTML = `❌ Error al iniciar: ${e.message}`;
-      }
-    }
-
-    async function logout() {
-      await fetch('/api/auth/youtube/logout', { method: 'POST' });
-      loadAuthStatus();
-      document.getElementById('oauthCodeBox').style.display = 'none';
     }
 
     // Cargar estado de auth al inicio (silencioso)

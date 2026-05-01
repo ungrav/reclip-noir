@@ -13,11 +13,9 @@ DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Auth paths
-COOKIES_FILE = "/app/auth/cookies.txt"          # OAuth2 token guardado aquí
 BROWSER_PROFILE = "/browser-data/config"         # Perfil de linuxserver/chromium
 
 jobs = {}
-oauth2_jobs = {}
 
 
 # ─── Auth Helpers ────────────────────────────────────────────────────────────
@@ -57,16 +55,11 @@ def _get_auth_strategies():
     """
     Devuelve la cadena de estrategias de auth en orden de prioridad:
     1. POT automático (sin args — bgutil plugin lo maneja solo)
-    2. OAuth2 cookies (si el usuario ya hizo login TV-style)
-    3. Browser sidecar (cookies de Chromium en el contenedor browser)
+    2. Browser sidecar (cookies de Chromium en el contenedor browser)
     """
     strategies = [[]]  # Estrategia 1: POT solo (plugin automático)
 
-    # Estrategia 2: OAuth2 — si existe el archivo de cookies con token
-    if os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 0:
-        strategies.append(["--cookies", COOKIES_FILE])
-
-    # Estrategia 3: Browser sidecar — si el perfil de Chromium existe
+    # Estrategia 2: Browser sidecar — si el perfil de Chromium existe
     chromium_path = os.path.join(BROWSER_PROFILE, "chromium")
     if os.path.exists(chromium_path):
         strategies.append(["--cookies-from-browser", f"chromium:{chromium_path}"])
@@ -271,98 +264,9 @@ def auth_status():
     chromium_path = os.path.join(BROWSER_PROFILE, "chromium")
     return jsonify({
         "pot": True,  # Siempre activo si el plugin está instalado
-        "oauth2": os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 0,
         "browser": os.path.exists(chromium_path),
     })
 
-
-@app.route("/api/auth/youtube/start", methods=["POST"])
-def start_youtube_oauth2():
-    """Inicia el flujo OAuth2 TV-style de YouTube."""
-    job_id = uuid.uuid4().hex[:8]
-    oauth2_jobs[job_id] = {
-        "status": "starting",
-        "auth_url": None,
-        "user_code": None,
-        "error": None,
-    }
-
-    def run_oauth2():
-        try:
-            cmd = [
-                "yt-dlp",
-                "--username", "oauth2", "--password", "",
-                "--cookies", COOKIES_FILE,
-                "--skip-download",
-                "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            ]
-
-            proc = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
-
-            oauth2_jobs[job_id]["status"] = "waiting_code"
-            auth_detected = False
-
-            for line in proc.stdout:
-                line = line.strip()
-                if not line:
-                    continue
-
-                # Detectar la URL y código del flujo device auth
-                if ("open" in line.lower() or "visit" in line.lower()) and "http" in line:
-                    url_match = re.search(r'https?://[^\s]+', line)
-                    code_match = re.search(r'\b([A-Z0-9]{4}-[A-Z0-9]{4})\b', line)
-
-                    if url_match:
-                        oauth2_jobs[job_id]["auth_url"] = url_match.group(0).rstrip(".")
-                    if code_match:
-                        oauth2_jobs[job_id]["user_code"] = code_match.group(1)
-
-                    oauth2_jobs[job_id]["status"] = "pending_auth"
-                    auth_detected = True
-
-            proc.wait()
-
-            if proc.returncode == 0:
-                oauth2_jobs[job_id]["status"] = "done"
-            elif not auth_detected:
-                oauth2_jobs[job_id]["status"] = "error"
-                oauth2_jobs[job_id]["error"] = "No se pudo iniciar el flujo OAuth2"
-            else:
-                oauth2_jobs[job_id]["status"] = "error"
-                oauth2_jobs[job_id]["error"] = "Autenticación fallida o cancelada"
-
-        except Exception as e:
-            oauth2_jobs[job_id]["status"] = "error"
-            oauth2_jobs[job_id]["error"] = str(e)
-
-    thread = threading.Thread(target=run_oauth2)
-    thread.daemon = True
-    thread.start()
-
-    return jsonify({"job_id": job_id})
-
-
-@app.route("/api/auth/youtube/<job_id>")
-def check_youtube_oauth2(job_id):
-    """Consulta el estado del flujo OAuth2."""
-    job = oauth2_jobs.get(job_id)
-    if not job:
-        return jsonify({"status": "not_found"}), 404
-    return jsonify(job)
-
-
-@app.route("/api/auth/youtube/logout", methods=["POST"])
-def logout_youtube():
-    """Elimina el archivo de cookies para desconectarse."""
-    if os.path.exists(COOKIES_FILE):
-        os.remove(COOKIES_FILE)
-    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":
