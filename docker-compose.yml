@@ -24,7 +24,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Caracas
+      - TZ=America/New_York
       - CHROME_CLI=--proxy-pac-url=http://host.docker.internal:8899/proxy.pac https://www.youtube.com
     volumes:
       - browser-data:/config
