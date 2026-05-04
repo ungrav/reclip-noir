@@ -1,6 +1,6 @@
-# ReClip
+# ReClip Noir
 
-> Enhanced fork of [averygan/reclip](https://github.com/averygan/reclip) — a self-hosted media downloader with a clean web UI.
+> Enhanced fork of [averygan/reclip](https://github.com/averygan/reclip) — a self-hosted media downloader with a premium dark UI.
 
 This fork adds a **premium dark mode UI**, **anti-bot bypass via browser sidecar**, **Apple-native codec selection**, **optimized audio extraction**, **metadata embedding**, and **optional VPN proxy routing** — all running inside Docker.
 
@@ -9,9 +9,9 @@ This fork adds a **premium dark mode UI**, **anti-bot bypass via browser sidecar
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-https://github.com/user-attachments/assets/419d3e50-c933-444b-8cab-a9724986ba05
+![ReClip Noir — Dark Mode UI](assets/preview-dark-ui.png)
 
-![ReClip MP3 Mode](assets/preview-mp3.png)
+![ReClip Noir — Video Card with Quality Selector](assets/preview-video-card.png)
 
 ---
 
@@ -95,8 +95,8 @@ Includes a declarative web extension manifest (`mobile-ext/`) for sharing URLs d
 ## Quick Start
 
 ```bash
-git clone https://github.com/ungrav/reclip.git
-cd reclip
+git clone https://github.com/ungrav/reclip-noir.git
+cd reclip-noir
 docker compose up -d
 ```
 
