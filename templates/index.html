@@ -141,6 +141,21 @@
     .fetch-btn:active { transform: scale(0.98); }
     .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+    .paste-btn {
+      padding: 10px 16px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--fg);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .paste-btn:hover { border-color: var(--fg); }
+
     /* Cards */
     .cards { margin-top: 24px; }
 
@@ -453,7 +468,7 @@
     .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
     
     .sidebar {
-      position: fixed; top: 0; right: -420px; bottom: 0; width: 420px;
+      position: fixed; top: 0; right: -600px; bottom: 0; width: 600px; max-width: 100vw;
       background: var(--bg); border-left: 1px solid var(--card-border);
       z-index: 101; display: flex; flex-direction: column;
       transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -505,7 +520,10 @@
         <button class="pill active" data-format="video" onclick="setFormat(this)">MP4</button>
         <button class="pill" data-format="audio" onclick="setFormat(this)">MP3</button>
       </div>
-      <button class="fetch-btn" id="goBtn" onclick="go()">Buscar</button>
+      <div style="display:flex; gap:8px; flex:1">
+        <button class="paste-btn" onclick="pasteLinks()" title="Pegar enlaces inteligentemente">📋</button>
+        <button class="fetch-btn" id="goBtn" onclick="go()">Buscar</button>
+      </div>
     </div>
 
     <div id="cards" class="cards"></div>
@@ -592,6 +610,26 @@
     });
 
     let allowDirect = false;
+
+    async function pasteLinks() {
+      try {
+        const text = await navigator.clipboard.readText();
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urls = text.match(urlRegex);
+        if (urls && urls.length > 0) {
+          const textarea = document.getElementById('urls');
+          const current = textarea.value.trim();
+          textarea.value = current ? current + '\n' + urls.join('\n') : urls.join('\n');
+          // Opcional: enfocar o hacer un pequeño efecto visual
+          textarea.focus();
+        } else {
+          alert('No se encontraron enlaces en el portapapeles.');
+        }
+      } catch (err) {
+        console.error('Error al leer el portapapeles: ', err);
+        alert('No se pudo acceder al portapapeles. Asegúrate de dar los permisos necesarios al navegador.');
+      }
+    }
 
     async function go() {
       const urls = parseUrls(document.getElementById('urls').value);

@@ -13,7 +13,7 @@ DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Auth paths
-BROWSER_PROFILE = "/browser-data/config"         # Perfil de linuxserver/chromium
+BROWSER_PROFILE = "/browser-data/.config"         # Perfil de linuxserver/chromium
 
 jobs = {}
 
@@ -96,14 +96,14 @@ def run_download(job_id, url, format_choice, format_id, proxy):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
-    base_cmd = ["yt-dlp", "--no-playlist", "-o", out_template]
+    base_cmd = ["yt-dlp", "--no-playlist", "-o", out_template, "--embed-metadata", "--embed-thumbnail"]
 
     if format_choice == "audio":
-        base_cmd += ["-x", "--audio-format", "mp3"]
+        base_cmd += ["-f", "bestaudio", "-x", "--audio-format", "mp3"]
     elif format_id:
         base_cmd += ["-f", f"{format_id}+bestaudio/best", "--merge-output-format", "mp4"]
     else:
-        base_cmd += ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"]
+        base_cmd += ["-f", "bestvideo[vcodec^=avc]+bestaudio[ext=m4a]/bestvideo+bestaudio/best", "--merge-output-format", "mp4"]
 
     try:
         result = _run_with_fallback(base_cmd, url, proxy=proxy, timeout=300)
@@ -222,9 +222,18 @@ def get_info():
         best_by_height = {}
         for f in info.get("formats", []):
             height = f.get("height")
-            if height and f.get("vcodec", "none") != "none":
+            vcodec = f.get("vcodec", "none")
+            if height and vcodec != "none":
                 tbr = f.get("tbr") or 0
-                if height not in best_by_height or tbr > (best_by_height[height].get("tbr") or 0):
+                is_avc = 1 if (vcodec.startswith("avc") or vcodec.startswith("h264")) else 0
+                score = (is_avc * 1000000) + tbr
+                
+                current = best_by_height.get(height, {})
+                current_vcodec = current.get("vcodec", "")
+                current_is_avc = 1 if (current_vcodec.startswith("avc") or current_vcodec.startswith("h264")) else 0
+                current_score = (current_is_avc * 1000000) + (current.get("tbr") or 0)
+                
+                if height not in best_by_height or score > current_score:
                     best_by_height[height] = f
 
         formats = []
