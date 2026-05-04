@@ -58,6 +58,9 @@ Downloads now include embedded metadata (title, artist, year) and thumbnail cove
 ### 📋 Smart Clipboard Paste
 The frontend extracts only valid URLs from clipboard content using regex, ignoring any surrounding text or formatting artifacts.
 
+### 🌍 Bilingual UI (English / Spanish)
+Auto-detects the user's browser language and renders the entire UI in English or Spanish. A toggle button in the top-right corner lets users switch manually — preference is saved to `localStorage`.
+
 ### 📱 Mobile Share Extension
 Includes a declarative web extension manifest (`mobile-ext/`) for sharing URLs directly from mobile browsers to the ReClip instance.
 
