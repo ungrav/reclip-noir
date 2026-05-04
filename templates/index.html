@@ -488,6 +488,27 @@
     .sidebar-close:hover { color: var(--fg); }
     .sidebar iframe { flex: 1; width: 100%; border: none; background: #fff; }
 
+    /* Language toggle */
+    .lang-toggle {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      z-index: 50;
+      user-select: none;
+    }
+    .lang-toggle:hover { border-color: var(--fg); color: var(--fg); }
+
     /* Mobile */
     @media (max-width: 500px) {
       .brand h1 { font-size: 3rem; }
@@ -502,18 +523,21 @@
       .controls { flex-wrap: wrap; }
       .fetch-btn { width: 100%; }
       .sidebar { width: 100%; right: -100%; }
+      .lang-toggle { top: 12px; right: 12px; }
     }
   </style>
 </head>
 <body>
+  <button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button>
+
   <div class="page">
     <div class="brand">
       <h1>Re<em>Clip</em></h1>
-      <p>Descargador de medios gratuito</p>
+      <p data-i18n="subtitle">Free Media Downloader</p>
     </div>
 
-    <textarea id="urls" placeholder="Pega una o más URLs..." rows="2"></textarea>
-    <p class="hint">¿Múltiples links? Sepáralos con espacios, comas o saltos de línea.</p>
+    <textarea id="urls" data-i18n-placeholder="placeholder" placeholder="Paste one or more URLs..." rows="2"></textarea>
+    <p class="hint" data-i18n="hint">Multiple links? Separate with spaces, commas, or line breaks.</p>
 
     <div class="controls">
       <div class="pill-group">
@@ -521,18 +545,18 @@
         <button class="pill" data-format="audio" onclick="setFormat(this)">MP3</button>
       </div>
       <div style="display:flex; gap:8px; flex:1">
-        <button class="paste-btn" onclick="pasteLinks()" title="Pegar enlaces inteligentemente">📋</button>
-        <button class="fetch-btn" id="goBtn" onclick="go()">Buscar</button>
+        <button class="paste-btn" onclick="pasteLinks()" data-i18n-title="paste_title" title="Smart paste links">📋</button>
+        <button class="fetch-btn" id="goBtn" onclick="go()" data-i18n="fetch">Fetch</button>
       </div>
     </div>
 
     <div id="cards" class="cards"></div>
 
-    <!-- Panel de Autenticación -->
+    <!-- Auth Panel -->
     <div class="auth-panel" id="authPanel">
       <div class="auth-header" onclick="toggleAuth()">
-        <span class="auth-title">🔐 Autenticación</span>
-        <span class="auth-toggle" id="authToggle">▼ mostrar</span>
+        <span class="auth-title" data-i18n="auth_title">🔐 Authentication</span>
+        <span class="auth-toggle" id="authToggle" data-i18n="auth_show">▼ show</span>
       </div>
       <div class="auth-body" id="authBody" style="display:none">
         <div class="auth-indicators" id="authIndicators">
@@ -540,9 +564,9 @@
           <span class="auth-badge" id="badge-browser"><span class="dot"></span>Browser Sidecar</span>
         </div>
         <div class="auth-actions">
-          <button class="auth-btn" onclick="openSidebar()">Abrir en Barra Lateral</button>
+          <button class="auth-btn" onclick="openSidebar()" data-i18n="open_sidebar">Open in Sidebar</button>
           <a href="http://localhost:3000" target="_blank">
-            <button class="auth-btn">Abrir en Nueva Pestaña ↗</button>
+            <button class="auth-btn" data-i18n="open_tab">Open in New Tab ↗</button>
           </a>
         </div>
       </div>
@@ -559,13 +583,116 @@
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <span>🌐 Navegador Sidecar</span>
+      <span data-i18n="sidecar_title">🌐 Sidecar Browser</span>
       <button class="sidebar-close" onclick="closeSidebar()">×</button>
     </div>
     <iframe id="sidebarFrame" src="" title="Browser"></iframe>
   </div>
 
   <script>
+    // ── i18n ──────────────────────────────────────────────────────────────────
+    const i18n = {
+      en: {
+        subtitle: 'Free Media Downloader',
+        placeholder: 'Paste one or more URLs...',
+        hint: 'Multiple links? Separate with spaces, commas, or line breaks.',
+        fetch: 'Fetch',
+        loading: 'Loading...',
+        paste_title: 'Smart paste links',
+        auth_title: '🔐 Authentication',
+        auth_show: '▼ show',
+        auth_hide: '▲ hide',
+        open_sidebar: 'Open in Sidebar',
+        open_tab: 'Open in New Tab ↗',
+        sidecar_title: '🌐 Sidecar Browser',
+        download: 'Download',
+        downloading: 'Downloading...',
+        save: 'Save',
+        retry: 'Retry',
+        download_all: 'Download All',
+        no_title: 'Untitled',
+        fetch_error: 'Could not fetch the video',
+        unsupported: 'This URL is not supported',
+        unavailable: 'The video is unavailable or private',
+        private: 'This video is private',
+        forbidden: 'Access denied by the platform',
+        not_found: 'Video not found',
+        copyright: 'Video blocked by copyright',
+        geo: 'Video not available in your region',
+        timeout: 'Timed out — try again',
+        network_err: 'Network error — check your connection',
+        lost_conn: 'Lost connection to server',
+        vpn_down: 'VPN unavailable (NordVPN and ProtonVPN down or unreachable).\n\nDo you want to download using your direct internet connection without VPN protection?',
+        vpn_cancel: 'Cancelled: VPN required',
+        vpn_cancel_op: 'Operation cancelled: VPN required',
+        no_clipboard: 'No links found in clipboard.',
+        clipboard_err: 'Could not access clipboard. Make sure to grant browser permissions.',
+      },
+      es: {
+        subtitle: 'Descargador de medios gratuito',
+        placeholder: 'Pega una o más URLs...',
+        hint: '¿Múltiples links? Sepáralos con espacios, comas o saltos de línea.',
+        fetch: 'Buscar',
+        loading: 'Cargando...',
+        paste_title: 'Pegar enlaces inteligentemente',
+        auth_title: '🔐 Autenticación',
+        auth_show: '▼ mostrar',
+        auth_hide: '▲ ocultar',
+        open_sidebar: 'Abrir en Barra Lateral',
+        open_tab: 'Abrir en Nueva Pestaña ↗',
+        sidecar_title: '🌐 Navegador Sidecar',
+        download: 'Descargar',
+        downloading: 'Descargando...',
+        save: 'Guardar',
+        retry: 'Reintentar',
+        download_all: 'Descargar Todo',
+        no_title: 'Sin título',
+        fetch_error: 'No se pudo obtener el video',
+        unsupported: 'Esta URL no es compatible',
+        unavailable: 'El video no está disponible o es privado',
+        private: 'Este video es privado',
+        forbidden: 'Acceso denegado por la plataforma',
+        not_found: 'Video no encontrado',
+        copyright: 'Video bloqueado por derechos de autor',
+        geo: 'Video no disponible en tu región',
+        timeout: 'Tiempo de espera agotado — intenta de nuevo',
+        network_err: 'Error de red — verifica tu conexión',
+        lost_conn: 'Se perdió la conexión con el servidor',
+        vpn_down: 'VPN no disponible (NordVPN y ProtonVPN caídos o inalcanzables).\n\n¿Deseas descargar usando tu conexión directa a internet sin protección VPN?',
+        vpn_cancel: 'Cancelado: VPN requerida',
+        vpn_cancel_op: 'Operación cancelada: VPN requerida',
+        no_clipboard: 'No se encontraron enlaces en el portapapeles.',
+        clipboard_err: 'No se pudo acceder al portapapeles. Asegúrate de dar los permisos necesarios al navegador.',
+      }
+    };
+
+    // Detect language: saved preference > browser language > default English
+    let lang = localStorage.getItem('reclip-lang')
+      || (navigator.language.startsWith('es') ? 'es' : 'en');
+
+    function t(key) { return i18n[lang]?.[key] || i18n.en[key] || key; }
+
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        el.title = t(el.dataset.i18nTitle);
+      });
+      document.getElementById('langToggle').textContent = lang === 'es' ? 'EN' : 'ES';
+    }
+
+    function toggleLang() {
+      lang = lang === 'es' ? 'en' : 'es';
+      localStorage.setItem('reclip-lang', lang);
+      applyI18n();
+      // Re-render cards if any exist
+      cardData.forEach((_, idx) => renderCard(idx));
+    }
+
     let currentFormat = 'video';
     let cardData = [];
 
@@ -593,15 +720,15 @@
     }
 
     function friendlyError(err) {
-      if (err.includes('Unsupported URL')) return 'Esta URL no es compatible';
-      if (err.includes('Video unavailable')) return 'El video no está disponible o es privado';
-      if (err.includes('Private video')) return 'Este video es privado';
-      if (err.includes('HTTP Error 403')) return 'Acceso denegado por la plataforma';
-      if (err.includes('HTTP Error 404')) return 'Video no encontrado';
-      if (err.includes('copyright')) return 'Video bloqueado por derechos de autor';
-      if (err.includes('geo')) return 'Video no disponible en tu región';
-      if (err.includes('timed out') || err.includes('Timed out')) return 'Tiempo de espera agotado — intenta de nuevo';
-      if (err.includes('network') || err.includes('Network')) return 'Error de red — verifica tu conexión';
+      if (err.includes('Unsupported URL')) return t('unsupported');
+      if (err.includes('Video unavailable')) return t('unavailable');
+      if (err.includes('Private video')) return t('private');
+      if (err.includes('HTTP Error 403')) return t('forbidden');
+      if (err.includes('HTTP Error 404')) return t('not_found');
+      if (err.includes('copyright')) return t('copyright');
+      if (err.includes('geo')) return t('geo');
+      if (err.includes('timed out') || err.includes('Timed out')) return t('timeout');
+      if (err.includes('network') || err.includes('Network')) return t('network_err');
       return err.length > 80 ? err.slice(0, 80) + '...' : err;
     }
 
@@ -620,14 +747,13 @@
           const textarea = document.getElementById('urls');
           const current = textarea.value.trim();
           textarea.value = current ? current + '\n' + urls.join('\n') : urls.join('\n');
-          // Opcional: enfocar o hacer un pequeño efecto visual
           textarea.focus();
         } else {
-          alert('No se encontraron enlaces en el portapapeles.');
+          alert(t('no_clipboard'));
         }
       } catch (err) {
-        console.error('Error al leer el portapapeles: ', err);
-        alert('No se pudo acceder al portapapeles. Asegúrate de dar los permisos necesarios al navegador.');
+        console.error('Clipboard error: ', err);
+        alert(t('clipboard_err'));
       }
     }
 
@@ -638,7 +764,7 @@
       const btn = document.getElementById('goBtn');
       const container = document.getElementById('cards');
       btn.disabled = true;
-      btn.textContent = 'Cargando...';
+      btn.textContent = t('loading');
       container.innerHTML = '';
       cardData = [];
 
@@ -657,13 +783,13 @@
           const data = await res.json();
           
           if (data.vpn_required && !allowDirect) {
-            const ans = confirm('VPN no disponible (NordVPN y ProtonVPN caídos o inalcanzables).\n\n¿Deseas intentar la descarga usando tu conexión directa a internet sin protección VPN?');
+            const ans = confirm(t('vpn_down'));
             if (ans) {
               allowDirect = true;
-              i--; // Reintentar
+              i--;
               continue;
             } else {
-              cardData[idx] = { ...cardData[idx], status: 'info-error', error: 'Operación cancelada: VPN requerida' };
+              cardData[idx] = { ...cardData[idx], status: 'info-error', error: t('vpn_cancel_op') };
               renderCard(idx);
               continue;
             }
@@ -694,7 +820,7 @@
       }
 
       btn.disabled = false;
-      btn.textContent = 'Buscar';
+      btn.textContent = t('fetch');
     }
 
     function renderCard(idx) {
@@ -730,7 +856,7 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="card-title" style="color:var(--error)">No se pudo obtener el video</div>
+            <div class="card-title" style="color:var(--error)">${esc(t('fetch_error'))}</div>
             <div class="card-error-msg">${esc(friendlyError(c.error || ''))}</div>
             <div class="card-error-url">${esc(c.url)}</div>
           </div>
@@ -760,21 +886,21 @@
 
       let actionHtml = '';
       if (c.status === 'ready') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Descargar</button>${qualityChips}`;
+        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">${esc(t('download'))}</button>${qualityChips}`;
       } else if (c.status === 'downloading') {
-        actionHtml = `<span class="card-status downloading"><span class="spin"></span> Descargando...</span>`;
+        actionHtml = `<span class="card-status downloading"><span class="spin"></span> ${esc(t('downloading'))}</span>`;
       } else if (c.status === 'done') {
-        actionHtml = `<button class="card-dl-btn done" onclick="saveCard(${idx})">Guardar</button>
+        actionHtml = `<button class="card-dl-btn done" onclick="saveCard(${idx})">${esc(t('save'))}</button>
           <span class="card-status done">${esc(c.filename || '')}</span>`;
       } else if (c.status === 'error') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Reintentar</button>
-          <span class="card-status error">${esc(friendlyError(c.error || 'Descarga fallida'))}</span>`;
+        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">${esc(t('retry'))}</button>
+          <span class="card-status error">${esc(friendlyError(c.error || ''))}</span>`;
       }
 
       el.innerHTML = `
         <div class="card-thumb">${thumbHtml}</div>
         <div class="card-body">
-          <div class="card-title">${esc(c.title || 'Sin título')}</div>
+          <div class="card-title">${esc(c.title || t('no_title'))}</div>
           <div class="card-meta">${esc(c.uploader)}${c.duration ? ' · ' + fmtDur(c.duration) : ''}</div>
           <div class="card-actions">${actionHtml}</div>
         </div>
@@ -788,7 +914,7 @@
       const bar = document.createElement('div');
       bar.id = 'dl-all-bar';
       bar.className = 'dl-all-bar';
-      bar.innerHTML = `<button class="dl-all-btn" onclick="dlAll()">Descargar Todo</button>`;
+      bar.innerHTML = `<button class="dl-all-btn" onclick="dlAll()">${esc(t('download_all'))}</button>`;
       document.getElementById('cards').appendChild(bar);
     }
 
@@ -818,13 +944,13 @@
         const data = await res.json();
 
         if (data.vpn_required && !allowDirect) {
-            const ans = confirm('VPN no disponible (NordVPN y ProtonVPN caídos o inalcanzables).\n\n¿Deseas descargar usando tu conexión directa a internet sin protección VPN?');
+            const ans = confirm(t('vpn_down'));
             if (ans) {
               allowDirect = true;
               return dlCard(idx);
             } else {
               c.status = 'error';
-              c.error = 'Cancelado: VPN requerida';
+              c.error = t('vpn_cancel');
               renderCard(idx);
               return;
             }
@@ -866,7 +992,7 @@
         } catch {
           clearInterval(iv);
           c.status = 'error';
-          c.error = 'Se perdió la conexión con el servidor';
+          c.error = t('lost_conn');
           renderCard(idx);
         }
       }, 1000);
@@ -883,7 +1009,7 @@
 
     async function dlAll() {
       const btn = document.querySelector('.dl-all-btn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Descargando...'; }
+      if (btn) { btn.disabled = true; btn.textContent = t('downloading'); }
 
       for (let i = 0; i < cardData.length; i++) {
         if (cardData[i].status === 'ready') {
@@ -891,7 +1017,7 @@
         }
       }
 
-      if (btn) { btn.disabled = false; btn.textContent = 'Descargar Todo'; }
+      if (btn) { btn.disabled = false; btn.textContent = t('download_all'); }
     }
 
     // ── Auth Panel ──────────────────────────────────────────────────────────
@@ -902,7 +1028,7 @@
     function toggleAuth() {
       authOpen = !authOpen;
       document.getElementById('authBody').style.display = authOpen ? 'block' : 'none';
-      document.getElementById('authToggle').textContent = authOpen ? '▲ ocultar' : '▼ mostrar';
+      document.getElementById('authToggle').textContent = authOpen ? t('auth_hide') : t('auth_show');
       if (authOpen) loadAuthStatus();
     }
 
@@ -940,7 +1066,8 @@
       }, 300);
     }
 
-    // Cargar estado de auth al inicio (silencioso)
+    // Init: apply language and load auth status
+    applyI18n();
     loadAuthStatus();
   </script>
 </body>
