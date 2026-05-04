@@ -13,3 +13,9 @@ auth/
 auth-data/
 browser-data/
 cookies.txt
+
+# Internal dev docs — not for public repo
+.agent/
+DEVELOPMENT.md
+ERROR_LOG.md
+PROJECT_HISTORY.md
