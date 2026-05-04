@@ -2,7 +2,7 @@
 
 > Enhanced fork of [averygan/reclip](https://github.com/averygan/reclip) — a self-hosted media downloader with a clean web UI.
 
-This fork adds **VPN proxy routing**, **anti-bot bypass via browser sidecar**, **Apple-native codec selection**, **optimized audio extraction**, and **metadata embedding** — all running inside Docker.
+This fork adds a **premium dark mode UI**, **anti-bot bypass via browser sidecar**, **Apple-native codec selection**, **optimized audio extraction**, **metadata embedding**, and **optional VPN proxy routing** — all running inside Docker.
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
@@ -25,6 +25,9 @@ This fork builds upon that foundation with infrastructure and compatibility impr
 
 ## What This Fork Adds
 
+### 🌙 Premium Dark Mode UI
+Completely redesigned interface with a dark-first aesthetic: monochrome palette (`#0a0a0a` background), editorial serif typography (Instrument Serif + DM Mono), subtle noise texture, shimmer loading skeletons, and smooth slide-up animations. Fully responsive — works on mobile and desktop.
+
 ### 🛡️ Anti-Bot Bypass (YouTube CAPTCHA)
 YouTube blocks cloud-based `yt-dlp` requests with "Sign in to confirm you're not a bot" challenges. This fork solves it with a **two-layer authentication strategy**:
 
@@ -33,13 +36,13 @@ YouTube blocks cloud-based `yt-dlp` requests with "Sign in to confirm you're not
 
 The backend automatically tries POT first, then falls back to browser cookies if authentication fails.
 
-### 🌐 VPN Proxy Routing
-All download traffic is routed through a VPN proxy chain with automatic failover:
+### 🌐 VPN Proxy Routing (Optional)
+If you run VPN proxy containers on your host, download traffic is automatically routed through them with failover:
 - **Primary:** NordVPN proxy (port `8891`)
 - **Fallback:** ProtonVPN proxy (port `8892`)
-- **Last resort:** Direct connection (optional, per-request)
+- **No VPN?** No problem — if no proxy is detected, ReClip prompts you to continue with your direct internet connection. **VPN is completely optional.**
 
-The browser sidecar also routes through the same VPN chain via a dynamically-generated PAC file.
+The browser sidecar can also route through the same VPN chain via a dynamically-generated PAC file.
 
 ### 🍎 Apple-Native Codec Selection (H.264)
 The original project uses yt-dlp's default format selection, which may produce VP9/AV1 video inside MP4 containers. These codecs are **not natively supported** by macOS QuickTime, iOS, or Safari — resulting in black screens or playback failures.
