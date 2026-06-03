@@ -43,6 +43,7 @@
     }
 
     .page {
+      width: 100%;
       max-width: 620px;
       margin: 0 auto;
       padding: 60px 24px 80px;
@@ -99,6 +100,7 @@
       gap: 10px;
       margin-bottom: 6px;
       align-items: center;
+      max-width: 100%;
     }
     .pill-group {
       display: flex;
@@ -155,6 +157,91 @@
       justify-content: center;
     }
     .paste-btn:hover { border-color: var(--fg); }
+
+    .clip-panel {
+      margin: 12px 0 6px;
+      padding: 12px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .clip-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .clip-title {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .clip-clear {
+      border: none;
+      background: transparent;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .clip-clear:hover { color: var(--accent-hover); }
+    .clip-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .clip-field label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.64rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .clip-field input[type="text"] {
+      width: 100%;
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.76rem;
+      outline: none;
+    }
+    .clip-field input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.08);
+    }
+    .clip-sliders {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .clip-sliders input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .clip-sliders input[type="range"]:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .clip-error {
+      display: none;
+      margin-top: 8px;
+      font-size: 0.68rem;
+      color: var(--error);
+      line-height: 1.4;
+    }
+    .clip-error.active { display: block; }
 
     /* Cards */
     .cards { margin-top: 24px; }
@@ -513,6 +600,7 @@
     @media (max-width: 500px) {
       .brand h1 { font-size: 3rem; }
       .page { padding: 40px 16px 60px; }
+      .hint, .footer { overflow-wrap: anywhere; }
       .card { flex-direction: column; gap: 10px; }
       .card-thumb {
         width: 100%;
@@ -521,7 +609,16 @@
       }
       .card-title { white-space: normal; }
       .controls { flex-wrap: wrap; }
+      .controls > div:last-child {
+        flex: 0 0 100% !important;
+        width: 100%;
+        min-width: 0;
+      }
+      .paste-btn {
+        flex: 0 0 48px;
+      }
       .fetch-btn { width: 100%; }
+      .clip-fields, .clip-sliders { grid-template-columns: 1fr; }
       .sidebar { width: 100%; right: -100%; }
       .lang-toggle { top: 12px; right: 12px; }
     }
@@ -550,6 +647,28 @@
       </div>
     </div>
 
+    <div class="clip-panel">
+      <div class="clip-head">
+        <span class="clip-title" data-i18n="clip_title">Clip range</span>
+        <button class="clip-clear" onclick="clearClipRange()" data-i18n="clip_clear">Clear</button>
+      </div>
+      <div class="clip-fields">
+        <div class="clip-field">
+          <label for="clipStartInput" data-i18n="clip_start">Start</label>
+          <input id="clipStartInput" type="text" inputmode="numeric" placeholder="00:00" oninput="onClipTextInput('start')">
+        </div>
+        <div class="clip-field">
+          <label for="clipEndInput" data-i18n="clip_end">End</label>
+          <input id="clipEndInput" type="text" inputmode="numeric" placeholder="00:15" oninput="onClipTextInput('end')">
+        </div>
+      </div>
+      <div class="clip-sliders">
+        <input id="clipStartSlider" type="range" min="0" max="3600" value="0" disabled oninput="onClipSliderInput('start')">
+        <input id="clipEndSlider" type="range" min="0" max="3600" value="0" disabled oninput="onClipSliderInput('end')">
+      </div>
+      <div id="clipError" class="clip-error"></div>
+    </div>
+
     <div id="cards" class="cards"></div>
 
     <!-- Auth Panel -->
@@ -565,7 +684,7 @@
         </div>
         <div class="auth-actions">
           <button class="auth-btn" onclick="openSidebar()" data-i18n="open_sidebar">Open in Sidebar</button>
-          <a href="http://localhost:3000" target="_blank">
+          <a href="http://localhost:3002" target="_blank">
             <button class="auth-btn" data-i18n="open_tab">Open in New Tab ↗</button>
           </a>
         </div>
@@ -610,6 +729,14 @@
         save: 'Save',
         retry: 'Retry',
         download_all: 'Download All',
+        clip_title: 'Clip range',
+        clip_clear: 'Clear',
+        clip_start: 'Start',
+        clip_end: 'End',
+        clip_invalid: 'Use seconds, MM:SS, or HH:MM:SS.',
+        clip_order: 'End must be greater than start.',
+        clip_overflow: 'End is longer than this video.',
+        clip_negative: 'Time cannot be negative.',
         no_title: 'Untitled',
         fetch_error: 'Could not fetch the video',
         unsupported: 'This URL is not supported',
@@ -646,6 +773,14 @@
         save: 'Guardar',
         retry: 'Reintentar',
         download_all: 'Descargar Todo',
+        clip_title: 'Rango del clip',
+        clip_clear: 'Limpiar',
+        clip_start: 'Inicio',
+        clip_end: 'Final',
+        clip_invalid: 'Usa segundos, MM:SS o HH:MM:SS.',
+        clip_order: 'El final debe ser mayor que el inicio.',
+        clip_overflow: 'El final supera la duración del video.',
+        clip_negative: 'El tiempo no puede ser negativo.',
         no_title: 'Sin título',
         fetch_error: 'No se pudo obtener el video',
         unsupported: 'Esta URL no es compatible',
@@ -695,6 +830,9 @@
 
     let currentFormat = 'video';
     let cardData = [];
+    let clipStart = null;
+    let clipEnd = null;
+    let clipSliderMax = null;
 
     function setFormat(btn) {
       document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
@@ -706,12 +844,137 @@
       return [...new Set(text.split(/[\s,]+/).map(u => u.trim()).filter(u => u.startsWith('http')))];
     }
 
+    function parseTimeInput(value) {
+      const raw = value.trim();
+      if (!raw) return { ok: true, value: null };
+      if (raw.startsWith('-')) return { ok: false, error: t('clip_negative') };
+
+      const parts = raw.split(':');
+      if (parts.length > 3 || parts.some(p => p === '' || !/^\d+(\.\d+)?$/.test(p))) {
+        return { ok: false, error: t('clip_invalid') };
+      }
+
+      const nums = parts.map(Number);
+      if (nums.some(n => !Number.isFinite(n) || n < 0)) {
+        return { ok: false, error: t('clip_invalid') };
+      }
+      if (parts.length > 1 && nums.slice(1).some(n => n >= 60)) {
+        return { ok: false, error: t('clip_invalid') };
+      }
+
+      let seconds = nums[0];
+      if (parts.length === 2) seconds = nums[0] * 60 + nums[1];
+      if (parts.length === 3) seconds = nums[0] * 3600 + nums[1] * 60 + nums[2];
+      return { ok: true, value: seconds };
+    }
+
     function fmtDur(s) {
       if (!s) return '';
       const m = Math.floor(s / 60);
       const sec = Math.floor(s % 60);
       return `${m}:${sec.toString().padStart(2, '0')}`;
     }
+
+    function fmtClipTime(s) {
+      if (s == null) return '';
+      const whole = Math.floor(s);
+      const h = Math.floor(whole / 3600);
+      const m = Math.floor((whole % 3600) / 60);
+      const sec = whole % 60;
+      if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function setClipError(message) {
+      const el = document.getElementById('clipError');
+      el.textContent = message || '';
+      el.classList.toggle('active', Boolean(message));
+    }
+
+    function readyDurations() {
+      return cardData
+        .filter(c => c.status === 'ready' && Number.isFinite(c.duration) && c.duration > 0)
+        .map(c => Math.floor(c.duration));
+    }
+
+    function updateClipBounds() {
+      const durations = readyDurations();
+      clipSliderMax = durations.length ? Math.min(...durations) : null;
+      const startSlider = document.getElementById('clipStartSlider');
+      const endSlider = document.getElementById('clipEndSlider');
+      const enabled = Boolean(clipSliderMax);
+      [startSlider, endSlider].forEach(slider => {
+        slider.disabled = !enabled;
+        slider.max = enabled ? String(clipSliderMax) : '3600';
+      });
+      syncClipSliders();
+    }
+
+    function syncClipSliders() {
+      const startSlider = document.getElementById('clipStartSlider');
+      const endSlider = document.getElementById('clipEndSlider');
+      const max = clipSliderMax || 3600;
+      startSlider.value = String(Math.min(Math.floor(clipStart || 0), max));
+      endSlider.value = String(Math.min(Math.floor(clipEnd || 0), max));
+    }
+
+    function onClipTextInput(which) {
+      const input = document.getElementById(which === 'start' ? 'clipStartInput' : 'clipEndInput');
+      const parsed = parseTimeInput(input.value);
+      if (!parsed.ok) {
+        setClipError(parsed.error);
+        return;
+      }
+      if (which === 'start') clipStart = parsed.value;
+      else clipEnd = parsed.value;
+      setClipError('');
+      syncClipSliders();
+    }
+
+    function onClipSliderInput(which) {
+      const slider = document.getElementById(which === 'start' ? 'clipStartSlider' : 'clipEndSlider');
+      const value = Number(slider.value);
+      if (which === 'start') {
+        clipStart = value;
+        document.getElementById('clipStartInput').value = fmtClipTime(value);
+      } else {
+        clipEnd = value;
+        document.getElementById('clipEndInput').value = fmtClipTime(value);
+      }
+      setClipError('');
+    }
+
+    function clearClipRange() {
+      clipStart = null;
+      clipEnd = null;
+      document.getElementById('clipStartInput').value = '';
+      document.getElementById('clipEndInput').value = '';
+      setClipError('');
+      syncClipSliders();
+    }
+
+    function clipPayloadForCard(c) {
+      const startParsed = parseTimeInput(document.getElementById('clipStartInput').value);
+      const endParsed = parseTimeInput(document.getElementById('clipEndInput').value);
+      if (!startParsed.ok) return { ok: false, error: startParsed.error };
+      if (!endParsed.ok) return { ok: false, error: endParsed.error };
+
+      const start = startParsed.value;
+      const end = endParsed.value;
+      clipStart = start;
+      clipEnd = end;
+      syncClipSliders();
+
+      if (start == null && end == null) return { ok: true, start: null, end: null };
+      const normalizedStart = start == null ? 0 : start;
+      if (end != null && end <= normalizedStart) return { ok: false, error: t('clip_order') };
+      if (Number.isFinite(c.duration)) {
+        if (end != null && end > c.duration) return { ok: false, error: t('clip_overflow') };
+        if (end == null && normalizedStart >= c.duration) return { ok: false, error: t('clip_overflow') };
+      }
+      return { ok: true, start: normalizedStart, end };
+    }
+
 
     function esc(s) {
       const d = document.createElement('div');
@@ -813,8 +1076,10 @@
           cardData[idx] = { ...cardData[idx], status: 'info-error', error: err.message };
         }
         renderCard(idx);
+        updateClipBounds();
       }
 
+      updateClipBounds();
       if (cardData.filter(c => c.status === 'ready').length > 1) {
         renderDownloadAll();
       }
@@ -925,6 +1190,15 @@
 
     async function dlCard(idx) {
       const c = cardData[idx];
+      const clip = clipPayloadForCard(c);
+      if (!clip.ok) {
+        setClipError(clip.error);
+        c.status = 'error';
+        c.error = clip.error;
+        renderCard(idx);
+        return;
+      }
+      setClipError('');
       c.status = 'downloading';
       c.error = null;
       renderCard(idx);
@@ -938,7 +1212,9 @@
             format: currentFormat,
             format_id: c.selectedFormatId,
             title: c.title || '',
-            allow_direct: allowDirect
+            allow_direct: allowDirect,
+            clip_start: clip.start,
+            clip_end: clip.end
           }),
         });
         const data = await res.json();
@@ -1051,7 +1327,7 @@
 
     // Funciones Sidebar
     function openSidebar() {
-      document.getElementById('sidebarFrame').src = 'http://localhost:3000/?resize=remote';
+      document.getElementById('sidebarFrame').src = 'http://localhost:3002/?resize=remote';
       document.getElementById('sidebarOverlay').classList.add('active');
       document.getElementById('sidebar').classList.add('active');
       document.body.style.overflow = 'hidden'; // Prevenir scroll de fondo

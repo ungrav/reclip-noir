@@ -13,8 +13,16 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8899
+      - POT_PROVIDER_URL=http://pot-provider:4416
     depends_on:
       - browser
+      - pot-provider
+
+  pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno
+    container_name: reclip-pot-provider
+    init: true
+    restart: unless-stopped
 
   browser:
     image: lscr.io/linuxserver/chromium:latest
@@ -25,12 +33,12 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Miami
-      - CUSTOM_PORT=3000
+      - CUSTOM_PORT=3002
       - CHROME_CLI=https://www.youtube.com --proxy-pac-url=http://host.docker.internal:8899/proxy.pac --start-maximized
     volumes:
       - browser-data:/config
     ports:
-      - "3000:3000"
+      - "3002:3002"
     shm_size: "1gb"
     restart: unless-stopped
 

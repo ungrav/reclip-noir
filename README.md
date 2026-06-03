@@ -75,7 +75,7 @@ Includes a declarative web extension manifest (`mobile-ext/`) for sharing URLs d
 │  ┌──────────────┐       ┌────────────────────┐  │
 │  │   reclip     │       │  reclip-browser    │  │
 │  │  (Flask)     │◄─────►│  (Chromium)        │  │
-│  │  Port 8899   │cookies│  Port 3000         │  │
+│  │  Port 8899   │cookies│  Port 3002         │  │
 │  │              │       │  (KasmVNC Web UI)  │  │
 │  │  yt-dlp      │       │                    │  │
 │  │  + ffmpeg    │       │  Persistent login  │  │
@@ -104,11 +104,11 @@ docker compose up -d
 ```
 
 Open **http://localhost:8899** for the downloader UI.
-Open **http://localhost:3000** for the browser sidecar (first-time YouTube login).
+Open **http://localhost:3002** for the browser sidecar (first-time YouTube login).
 
 ### First-Time Setup
 
-1. Open the browser sidecar at `http://localhost:3000`
+1. Open the browser sidecar at `http://localhost:3002`
 2. Log in to YouTube with any Google account
 3. Close the browser tab — the session persists
 4. All future downloads will use that authenticated session
