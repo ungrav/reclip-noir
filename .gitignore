@@ -16,6 +16,8 @@ cookies.txt
 
 # Internal dev docs — not for public repo
 .agent/
+.serena/
+graphify-out/
 DEVELOPMENT.md
 ERROR_LOG.md
 PROJECT_HISTORY.md
