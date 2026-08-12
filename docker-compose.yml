@@ -6,7 +6,7 @@ services:
       - "8899:8899"
     volumes:
       - .:/app
-      - /app/downloads
+      - downloads-data:/app/downloads
       - auth-data:/app/auth
       - browser-data:/browser-data
     restart: unless-stopped
@@ -19,13 +19,13 @@ services:
       - pot-provider
 
   pot-provider:
-    image: brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno
+    image: brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno@sha256:bea3cfda79245700d7ad90500052b4358b1c1828fdc0961929624b83933121bc
     container_name: reclip-pot-provider
     init: true
     restart: unless-stopped
 
   browser:
-    image: lscr.io/linuxserver/chromium:latest
+    image: lscr.io/linuxserver/chromium:latest@sha256:348379fe0ff2a8d96d1085c568936730f7ae60b8d354fc728848164298fe18c8
     container_name: reclip-browser
     security_opt:
       - seccomp:unconfined #optional
@@ -43,5 +43,9 @@ services:
     restart: unless-stopped
 
 volumes:
+  downloads-data:
+    name: reclip_reclip_downloads
   auth-data:
+    name: reclip_reclip_auth
   browser-data:
+    name: reclip_browser_profile

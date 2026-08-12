@@ -24,6 +24,23 @@ YTDLP_COMMON_ARGS = [
 jobs = {}
 
 
+def parse_ytdlp_json(stdout):
+    """Parse the first JSON object emitted by yt-dlp."""
+    first_error = None
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError as exc:
+            first_error = exc
+
+    if first_error:
+        raise first_error
+    raise ValueError("yt-dlp returned no data")
+
+
 # ─── Auth Helpers ────────────────────────────────────────────────────────────
 
 def _parse_clip_value(value, field_name):
@@ -293,7 +310,7 @@ def get_info():
             return jsonify({"error": "La URL no parece contener un video válido."}), 400
             
         try:
-            info = json.loads(stdout_clean)
+            info = parse_ytdlp_json(stdout_clean)
         except json.JSONDecodeError:
             return jsonify({"error": "Respuesta inválida al procesar el video."}), 400
 

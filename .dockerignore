@@ -1,0 +1,13 @@
+.git/
+.agent/
+.serena/
+graphify-out/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+downloads/
+auth/
+.env
+.env.*
+*.log
